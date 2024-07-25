@@ -11,6 +11,7 @@ def call(Map config = [:]){
     _BUILD_COMPONENT=${config.BuildComponent}
     _BUILD_START_TIME=${config.BuildStartTime}
     _BUILD_END_TIME=${config.BuildFinishTime}
+    _MAIN_REVISION=${config.BuildCommit}
     
     _CONNECTALL_UA_URL=${config.ConnectALL_Api_Url}
     _CONNECTALL_API_KEY=${config.ConnectALL_Api_Key}
@@ -24,7 +25,7 @@ def call(Map config = [:]){
     
 
     #echo 'Automation Name : \$_AUTOMATION_NAME'
-    json="{&quot;appLinkName&quot;:&quot;\$_AUTOMATION_NAME&quot;,&quot;fields&quot;: {&quot;IsSuccessful&quot;:&quot;\$_IS_SUCCESSFUL&quot;,&quot;TimeCreated&quot;:&quot;\$_Formatted_Start_Date&quot;,&quot;TimeDeployed&quot;:&quot;\$_Formatted_End_Date&quot;,&quot;Component&quot;:&quot;\$_BUILD_COMPONENT&quot;,&quot;Id&quot;: &quot;\$_DEPLOY_ID&quot;}}"
+    json="{&quot;appLinkName&quot;:&quot;\$_AUTOMATION_NAME&quot;,&quot;fields&quot;: {&quot;IsSuccessful&quot;:&quot;\$_IS_SUCCESSFUL&quot;,&quot;TimeCreated&quot;:&quot;\$_Formatted_Start_Date&quot;,&quot;TimeDeployed&quot;:&quot;\$_Formatted_End_Date&quot;,&quot;MainRevision&quot;:&quot;\$_MAIN_REVISION&quot;,&quot;Component&quot;:&quot;\$_BUILD_COMPONENT&quot;,&quot;Id&quot;: &quot;\$_DEPLOY_ID&quot;}}"
 
     json_str=\$(echo \$json | sed 's/&quot;/"/g')
     
