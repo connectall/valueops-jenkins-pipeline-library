@@ -32,7 +32,7 @@ pipeline {
                         BuildStartTime: "${currentBuild.timeInMillis}",
                         CurrentBuildCommit: 'HEAD',
                         GitRepoLoc: "./", 
-                        InsightsWorkspaceObjectId: "${env.INSIGHTS_WORKSPACE_OBJECT_ID}",
+                        WorkspaceObjectId: "${env.INSIGHTS_WORKSPACE_OBJECT_ID}",
                         PreviousSuccessBuildCommit: 'HEAD~1',
                     )
               }
@@ -48,7 +48,7 @@ pipeline {
                     BuildFinishTime: "${String.valueOf(currentBuild.timeInMillis + currentBuild.duration)}",
                     BuildId: "${env.BUILD_ID}", 
                     BuildIsSuccessful: currentBuild.currentResult == 'SUCCESS',
-                    InsightsWorkspaceObjectId: "${env.INSIGHTS_WORKSPACE_OBJECT_ID}",
+                    WorkspaceObjectId: "${env.INSIGHTS_WORKSPACE_OBJECT_ID}",
                 )
             }
           }
