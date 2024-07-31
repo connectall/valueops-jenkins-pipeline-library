@@ -106,11 +106,11 @@ make_vsm_deploy() {
   json="{"
   json+="\"VSMDeploy\": {"
   
-  if [ -n "$deploy_is_successful" ]; then
+  if [ ! -z "$deploy_is_successful" ] && [ "$deploy_is_successful" != "null" ]; then
     json+="\"IsSuccessful\": $deploy_is_successful,"
   fi
   
-  if [ -n "$formatted_end_date" ]; then
+  if [ ! -z "$formatted_end_date" ]; then
     json+="\"TimeDeployed\": \"$formatted_end_date\","
   fi
   
@@ -190,7 +190,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-if [ -z "$DEPLOY_END_TIME" ]; then
+if [ -z "$DEPLOY_END_TIME" ] || [ "$DEPLOY_END_TIME" == "null" ]; then
   formatted_end_date=""
 else
   formatted_end_date=$(parse_millis "$DEPLOY_END_TIME")
