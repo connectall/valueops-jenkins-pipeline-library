@@ -4,7 +4,7 @@ pipeline {
 
     environment {
       INSIGHTS_API_KEY = credentials('insights-api-key')
-      INSIGHTS_API_URL = "https://kr101.testn.f4tech.com"
+      INSIGHTS_API_URL = "https://rally1.rallydev.com"
       INSIGHTS_WORKSPACE_OBJECT_ID = 41529001
       INSIGHTS_COMPONENT_OBJECT_ID = 423575325641
     }
