@@ -36,32 +36,28 @@ if [ -z "$DEPLOY_END_TIME" ]; then
   exit 1
 fi
 
+full_api_url="$API_URL/slm/webservice/v2.0"
+
 parse_millis() {
     local ms=$1
     local seconds=$((ms / 1000))
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
-        date -r $seconds -u +"%Y-%m-%dT%H:%M:%S%z"
+        date -r $seconds -u +"%Y-%m-%dT%H:%M:%S"
     else
         # Linux and other Unix-like systems
-        date -u -d @$seconds +"%Y-%m-%dT%H:%M:%S%z"
+        date -u -d @$seconds +"%Y-%m-%dT%H:%M:%S"
     fi
 }
-
-formatted_end_date=$(parse_millis "$DEPLOY_END_TIME")
-if [ $? -ne 0 ]; then
-  echo "Could not parse end time: $DEPLOY_END_TIME"
-  exit 1
-fi
 
 query_deploy_id() {
     local build_id=$1
     local response
-    response=$(curl -s -H "ZSESSIONID: $API_KEY" "$API_URL/vsmdeploy?query=(BuildId%20=%20$build_id)&workspace=workspace/$API_WORKSPACE_OID&fetch=ObjectID")
+    response=$(curl -s -H "ZSESSIONID: $API_KEY" "$full_api_url/vsmdeploy?query=(BuildId%20=%20$build_id)&workspace=workspace/$API_WORKSPACE_OID&fetch=ObjectID")
     
     if [ $? -ne 0 ]; then
-      echo "Could not connect to $API_URL"
+      echo "Could not connect to $API_URL" >&2
       exit 1
     fi
     
@@ -73,12 +69,6 @@ get_deploy_id_from_response() {
     
     local deploy_id
     deploy_id=$(echo "$deploy_response" | grep -o '"ObjectID":[^,}]*' | head -1 | sed 's/.*: //')
-    
-    if [ -z "$deploy_id" ]; then
-        echo "No deploy found for build $DEPLOY_BUILD_ID in response" >&2
-        echo "$deploy_response" >&2
-        exit 1
-    fi
     
     echo "$deploy_id"
 }
@@ -98,10 +88,10 @@ update_deploy() {
     echo "Updating deploy in Insights"
     echo "$json"
     
-    response=$(curl -s -o /dev/null -H "ZSESSIONID: $API_KEY" -H 'Content-Type: application/json' -X POST -d "$json" "$API_URL/vsmdeploy/$deploy_id?workspace=workspace/$API_WORKSPACE_OID")
+    response=$(curl -s -o /dev/null -H "ZSESSIONID: $API_KEY" -H 'Content-Type: application/json' -X POST -d "$json" "$full_api_url/vsmdeploy/$deploy_id?workspace=workspace/$API_WORKSPACE_OID")
     
     if [ $? -ne 0 ]; then
-        echo "Could not connect to $API_URL"
+        echo "Could not connect to $API_URL" >&2
         exit 1
     fi
     
@@ -131,6 +121,12 @@ fi
 
 echo "Deploy found successfully"
 echo "VSMDeploy.ObjectId: $deploy_id"
+
+formatted_end_date=$(parse_millis "$DEPLOY_END_TIME")
+if [ $? -ne 0 ]; then
+  echo "Could not parse end time: $DEPLOY_END_TIME"
+  exit 1
+fi
 
 ## Update the deploy
 update_deploy "$deploy_id" "$formatted_end_date" "$DEPLOY_IS_SUCCESSFUL"

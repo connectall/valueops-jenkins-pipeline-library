@@ -42,16 +42,6 @@ if [ -z "$DEPLOY_START_TIME" ]; then
   exit 1
 fi
 
-if [ -z "$DEPLOY_END_TIME" ]; then
-  echo "DEPLOY_END_TIME is not set"
-  exit 1
-fi
-
-if [ -z "$DEPLOY_IS_SUCCESSFUL" ]; then
-  echo "DEPLOY_IS_SUCCESSFUL is not set"
-  exit 1
-fi
-
 if [ -z "$DEPLOY_MAIN_REVISION" ]; then
   echo "DEPLOY_MAIN_REVISION is not set"
   exit 1
@@ -72,16 +62,18 @@ if [ -z "$GIT_REPO_LOC" ]; then
   exit 1
 fi
 
+full_api_url="$API_URL/slm/webservice/v2.0"
+
 parse_millis() {
     local ms=$1
     local seconds=$((ms / 1000))
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
-        date -r $seconds -u +"%Y-%m-%dT%H:%M:%S%z"
+        date -r $seconds -u +"%Y-%m-%dT%H:%M:%S"
     else
         # Linux and other Unix-like systems
-        date -u -d @$seconds +"%Y-%m-%dT%H:%M:%S%z"
+        date -u -d @$seconds +"%Y-%m-%dT%H:%M:%S"
     fi
 }
 
@@ -92,10 +84,10 @@ parse_commit_log_timestamp() {
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
       # macOS
-      formatted_date=$(date -j -f '%Y-%m-%d %H:%M:%S %z' "$timestamp" +'%Y-%m-%dT%H:%M:%S%z')
+      formatted_date=$(date -j -f '%Y-%m-%d %H:%M:%S %z' "$timestamp" +'%Y-%m-%dT%H:%M:%S')
   else
       # Linux and other Unix-like systems
-      formatted_date=$(date -d "$timestamp" +'%Y-%m-%dT%H:%M:%S%z')
+      formatted_date=$(date -d "$timestamp" +'%Y-%m-%dT%H:%M:%S')
   fi
   
   echo "$formatted_date"
@@ -111,16 +103,23 @@ make_vsm_deploy() {
   local deploy_component=$5
   local deploy_build_id=$6
   
-  json="{ 
-    \"VSMDeploy\": {
-      \"IsSuccessful\": $deploy_is_successful,
-      \"TimeCreated\":  \"$formatted_start_date\",
-      \"TimeDeployed\": \"$formatted_end_date\",
-      \"MainRevision\": \"$deploy_main_revision\",
-      \"Component\":    \"vsmcomponent/$deploy_component\",
-      \"BuildId\":      \"$deploy_build_id\"
-    }
-  }"
+  json="{"
+  json+="\"VSMDeploy\": {"
+  
+  if [ -n "$deploy_is_successful" ]; then
+    json+="\"IsSuccessful\": $deploy_is_successful,"
+  fi
+  
+  if [ -n "$formatted_end_date" ]; then
+    json+="\"TimeDeployed\": \"$formatted_end_date\","
+  fi
+  
+  json+="\"TimeCreated\":  \"$formatted_start_date\","
+  json+="\"MainRevision\": \"$deploy_main_revision\","
+  json+="\"Component\":    \"vsmcomponent/$deploy_component\","
+  json+="\"BuildId\":      \"$deploy_build_id\""
+  json+="}"
+  json+="}"
   
   echo "Posting VSMDeploy to Insights" >&2
   echo "$json" >&2
@@ -130,7 +129,7 @@ make_vsm_deploy() {
      -H 'Content-Type: application/json' \
      -X POST \
      -d "$json" \
-     "$API_URL/vsmdeploy/create?workspace=workspace/$API_WORKSPACE_OID")
+     "$full_api_url/vsmdeploy/create?workspace=workspace/$API_WORKSPACE_OID")
   if [ $? -ne 0 ]; then
     echo "Could not connect to $API_URL" >&2
     exit 1
@@ -175,7 +174,7 @@ make_vsm_change() {
   echo "Posting VSMChange to Insights" >&2
   echo "$json" >&2
   
-  response=$(curl -s -H "ZSESSIONID: $API_KEY" -H 'Content-Type: application/json' -X POST -d "$json" "$API_URL/vsmchange/create?workspace=workspace/$API_WORKSPACE_OID")
+  response=$(curl -s -H "ZSESSIONID: $API_KEY" -H 'Content-Type: application/json' -X POST -d "$json" "$full_api_url/vsmchange/create?workspace=workspace/$API_WORKSPACE_OID")
   
   if [ $? -ne 0 ]; then
     echo "Could not connect to $API_URL" >&2
@@ -185,22 +184,26 @@ make_vsm_change() {
   echo "$response"
 }
 
-_formatted_start_date=$(parse_millis "$DEPLOY_START_TIME")
+formatted_start_date=$(parse_millis "$DEPLOY_START_TIME")
 if [ $? -ne 0 ]; then
   echo "Could not parse start time: $DEPLOY_START_TIME"
   exit 1
 fi
 
-_formatted_end_date=$(parse_millis "$DEPLOY_END_TIME")
-if [ $? -ne 0 ]; then
-  echo "Could not parse end time: $DEPLOY_END_TIME"
-  exit 1
+if [ -z "$DEPLOY_END_TIME" ]; then
+  formatted_end_date=""
+else
+  formatted_end_date=$(parse_millis "$DEPLOY_END_TIME")
+  if [ $? -ne 0 ]; then
+    echo "Could not parse end time: $DEPLOY_END_TIME"
+    exit 1
+  fi
 fi
 
 ### Script flow starts here
 echo ""
 ## Make a Deploy
-deploy_response=$(make_vsm_deploy "$DEPLOY_IS_SUCCESSFUL" "$_formatted_start_date" "$_formatted_end_date" "$DEPLOY_MAIN_REVISION" "$DEPLOY_COMPONENT" "$DEPLOY_BUILD_ID")
+deploy_response=$(make_vsm_deploy "$DEPLOY_IS_SUCCESSFUL" "$formatted_start_date" "$formatted_end_date" "$DEPLOY_MAIN_REVISION" "$DEPLOY_COMPONENT" "$DEPLOY_BUILD_ID")
 
 ## Exit if error
 if [ $? -ne 0 ]; then
@@ -221,17 +224,24 @@ fi
 echo "Deploy created successfully"
 echo "VSMDeploy.ObjectId: $deploy_id"
 
+log_file_path="$GIT_REPO_LOC/commit_log"
+
 ## Create the commit log we're going to loop over
-create_commit_log "$GIT_REPO_LOC" "$GIT_REPO_LOC/commit_log" "$PREVIOUS_SUCCESS_BUILD_COMMIT" "$CURRENT_BUILD_COMMIT"
+create_commit_log "$GIT_REPO_LOC" "$log_file_path" "$PREVIOUS_SUCCESS_BUILD_COMMIT" "$CURRENT_BUILD_COMMIT"
 
 ## Loop over the commit log and make VSMChanges
 while IFS= read -r line; do
     # Read the line
     read -r commit_id timestamp <<< "$line"
+    
+    # Exit if we can't parse the line
+    if [ -z "$commit_id" ] || [ -z "$timestamp" ]; then
+      echo "Failed to parse commit log line: $line" >&2
+      exit 1
+    fi
 
     # Parse the date
     formatted_date=$(parse_commit_log_timestamp "$timestamp")
-    
     
     # Make the VSMChange
     change_response=$(make_vsm_change "$commit_id" "$formatted_date" "$deploy_id")
@@ -242,8 +252,10 @@ while IFS= read -r line; do
       exit 1
     fi
     
+    # Try to extract the change id
     change_id=$(get_object_id_from_response "$change_response")
     
+    # Exit if it we can't find the change id in the response (this could be for many reasons)
     if [ -z "$change_id" ]; then
       echo "Failed to create VSMChange in Insights, no change id found in response." >&2
       echo "$change_response"
@@ -252,4 +264,4 @@ while IFS= read -r line; do
     
     echo "VSMChange created successfully"
     echo "VSMChange.ObjectId: $change_id"
-done < "$GIT_REPO_LOC/commit_log"
+done < "$log_file_path"
