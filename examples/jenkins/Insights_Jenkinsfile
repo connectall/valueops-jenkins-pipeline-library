@@ -24,16 +24,11 @@ pipeline {
                     postDeployAndCommitsToInsights(
                         ApiKey: "${env.INSIGHTS_API_KEY}",
                         ApiUrl: "${env.INSIGHTS_API_URL}",
-                        BuildCommit: "${env.GIT_COMMIT}",
                         BuildComponentObjectId: "${env.INSIGHTS_COMPONENT_OBJECT_ID}",
                         BuildFinishTime: "${String.valueOf(currentBuild.timeInMillis + currentBuild.duration)}",
-                        BuildId: "${env.BUILD_ID}", 
                         BuildIsSuccessful: currentBuild.currentResult == 'SUCCESS',
                         BuildStartTime: "${currentBuild.timeInMillis}",
-                        CurrentBuildCommit: 'HEAD',
-                        GitRepoLoc: "./", 
-                        WorkspaceObjectId: "${env.INSIGHTS_WORKSPACE_OBJECT_ID}",
-                        PreviousSuccessBuildCommit: 'HEAD~1',
+                        WorkspaceObjectId: "${env.INSIGHTS_WORKSPACE_OBJECT_ID}"
                     )
               }
             }

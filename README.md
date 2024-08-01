@@ -4,41 +4,68 @@
 
 ### postDeployAndCommitsToInsights
 #### Job Parameters
+
 ##### ApiKey
 The Insights API Key.
+
 ##### ApiUrl
 The Insights API Base URL. (e.g. https://rally1.rallydev.com)
+
 ##### BuildFinishTime (optional)
 The time the build completed in milliseconds. (e.g. 1722459117000)
-##### BuildId
+
+##### BuildId (optional)
 The ID of the build or artifact associated with this deploy. (e.g. insights-deploy-2)
+
+Defaults to `currentBuild.id`.
+
 ##### BuildIsSuccessful (optional)
 A boolean that indicates whether or not the build was successful.
+
 ##### BuildStartTime
 The time the build started in milliseconds. (e.g. 1722459117000)
-##### ComponentObjectId
-The ObjectID of the VSMComponent the created VSMDeploy is for. (e.g. 423575325641)
-##### CurrentBuildCommit
-The commit SHA being built and deploye. (e.g. f75ca53d2b9acf93109e1e52e156f8a1a875e899)
-##### WorkspaceObjectId
-The Insights Workspace ObjectID. (e.g. 41529001)
+
+##### ComponentObjectName
+The Name of the VSMComponent the created VSMDeploy is for. (e.g. web-ui)
+
+##### CurrentBuildCommit (optional)
+The commit SHA being deployed. (e.g. f75ca53d2b9acf93109e1e52e156f8a1a875e899)
+
+Defaults to `env.GIT_COMMIT`.
+
+##### GitRepoLoc (optional)
+The location of the git repo to generate a list of changes from.
+
+Defaults to the current working directory.
+
 ##### PreviousSuccessBuildCommit
 The commit SHA that was last successfully built and deployed (e.g. f75ca53d2b9acf93109e1e52e156f8a1a875e899)
 
+Defaults to `env.GIT_PREVIOUS_SUCCESSFUL_COMMIT`.
+
+##### WorkspaceObjectId
+The Insights Workspace ObjectID. (e.g. 41529001)
+
 ### updateDeployToInsights
 #### Job Parameters
+
 ##### ApiKey
 The Insights API Key
+
 ##### ApiUrl
 The Insights API Base URL. (e.g. https://rally1.rallydev.com)
+
 ##### BuildFinishTime
 The time the build the finished in milliseconds. (e.g. 1722459117000)
+
 ##### BuildId
 The ID of the build or artifact associated with this deploy. (e.g. insights-deploy-2)
 
 This ID is used to look up the VSMDeploy that is being updated.
+
 ##### BuildIsSuccessful
 A boolean that indicates whether or not the build was successful.
+
 ##### WorkspaceObjectId
 The Insights Workspace ObjectID. (e.g. 41529001)
 
