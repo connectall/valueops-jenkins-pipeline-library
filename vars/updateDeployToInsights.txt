@@ -1,0 +1,1 @@
+Updates a VSMDeploy instance with BUILD_RESULT and Finish time. 

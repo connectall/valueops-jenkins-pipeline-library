@@ -1,0 +1,1 @@
+Creates a VSMDeploy instance for the component, and associate the VSMChange objects (Commits) to the VSMDeploy object. 
