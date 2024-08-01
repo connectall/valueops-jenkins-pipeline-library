@@ -1,17 +1,32 @@
 def call(Map config = [:]) {
-  withEnv([
-        "API_KEY=${config.ApiKey}",
-        "API_URL=${config.ApiUrl}",
-        "API_WORKSPACE_OID=${config.WorkspaceOid}",
-        "CURRENT_BUILD_COMMIT=${config.CurrentBuildCommit ?: env.GIT_COMMIT}",
-        "DEPLOY_BUILD_ID=${config.BuildId ?: currentBuild.id}",
-        "DEPLOY_COMPONENT_NAME=${config.ComponentName}",
-        "DEPLOY_END_TIME=${config.BuildFinishTime}",
-        "DEPLOY_IS_SUCCESSFUL=${config.BuildIsSuccessful}",
-        "DEPLOY_MAIN_REVISION=${config.CurrentBuildCommit ?: env.GIT_COMMIT}",
-        "DEPLOY_START_TIME=${config.BuildStartTime}",
-        "GIT_REPO_LOC=${config.GitRepoLoc ?: './'}",
-        "PREVIOUS_SUCCESS_BUILD_COMMIT=${config.PreviousSuccessBuildCommit ?: env.GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
+    def defaultConfig = [
+        ApiKey: '',
+        ApiUrl: '',
+        WorkspaceOid: '',
+        CurrentBuildCommit: env.GIT_COMMIT ?: '',
+        BuildId: currentBuild.id,
+        ComponentName: '',
+        BuildFinishTime: '',
+        BuildIsSuccessful: '',
+        BuildStartTime: '',
+        GitRepoLoc: './',
+        PreviousSuccessBuildCommit: env.GIT_PREVIOUS_SUCCESSFUL_COMMIT ?: ''
+    ]
+    def mergedConfig = defaultConfig + config
+
+    withEnv([
+        "API_KEY=${mergedConfig.ApiKey}",
+        "API_URL=${mergedConfig.ApiUrl}",
+        "API_WORKSPACE_OID=${mergedConfig.WorkspaceOid}",
+        "CURRENT_BUILD_COMMIT=${mergedConfig.CurrentBuildCommit}",
+        "DEPLOY_BUILD_ID=${mergedConfig.BuildId}",
+        "DEPLOY_COMPONENT_NAME=${mergedConfig.ComponentName}",
+        "DEPLOY_END_TIME=${mergedConfig.BuildFinishTime}",
+        "DEPLOY_IS_SUCCESSFUL=${mergedConfig.BuildIsSuccessful}",
+        "DEPLOY_MAIN_REVISION=${mergedConfig.CurrentBuildCommit}",
+        "DEPLOY_START_TIME=${mergedConfig.BuildStartTime}",
+        "GIT_REPO_LOC=${mergedConfig.GitRepoLoc}",
+        "PREVIOUS_SUCCESS_BUILD_COMMIT=${mergedConfig.PreviousSuccessBuildCommit}"
     ]) {
         sh(libraryResource('postDeployAndCommitsToInsights.sh'))
     }
