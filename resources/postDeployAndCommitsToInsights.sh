@@ -2,7 +2,7 @@
 
 echo "API_URL: $API_URL"
 echo "API_WORKSPACE_OID: $API_WORKSPACE_OID"
-echo "DEPLOY_COMPONENT: $DEPLOY_COMPONENT"
+echo "DEPLOY_COMPONENT_NAME: $DEPLOY_COMPONENT_NAME"
 echo "DEPLOY_BUILD_ID: $DEPLOY_BUILD_ID"
 echo "DEPLOY_START_TIME: $DEPLOY_START_TIME"
 echo "DEPLOY_END_TIME: $DEPLOY_END_TIME"
@@ -27,8 +27,8 @@ if [ -z "$API_WORKSPACE_OID" ]; then
   exit 1
 fi
 
-if [ -z "$DEPLOY_COMPONENT" ]; then
-  echo "DEPLOY_COMPONENT is not set"
+if [ -z "$DEPLOY_COMPONENT_NAME" ]; then
+  echo "DEPLOY_COMPONENT_NAME is not set"
   exit 1
 fi
 
@@ -184,6 +184,19 @@ make_vsm_change() {
   echo "$response"
 }
 
+query_component() {
+    local name=$1
+    local response
+    response=$(curl -s -H "ZSESSIONID: $API_KEY" "$full_api_url/vsmcomponent?query=(Name%20=%20$name)&workspace=workspace/$API_WORKSPACE_OID&fetch=ObjectID")
+    
+    if [ $? -ne 0 ]; then
+      echo "Could not connect to $API_URL" >&2
+      exit 1
+    fi
+    
+    echo "$response"
+}
+
 formatted_start_date=$(parse_millis "$DEPLOY_START_TIME")
 if [ $? -ne 0 ]; then
   echo "Could not parse start time: $DEPLOY_START_TIME"
@@ -201,7 +214,23 @@ else
 fi
 
 ### Script flow starts here
-echo ""
+
+## Find the component by name
+component_response=$(query_component "$DEPLOY_COMPONENT_NAME")
+
+if [ $? -ne 0 ]; then
+  echo "Failed to query component in Insights"
+  exit 1
+fi
+
+component_id=$(get_object_id_from_response "$component_response")
+
+if [ -z "$component_id" ]; then
+  echo "Failed to find component in Insights, no component id found in response." >&2
+  echo "$component_response"
+  exit 1
+fi
+
 ## Make a Deploy
 deploy_response=$(make_vsm_deploy "$DEPLOY_IS_SUCCESSFUL" "$formatted_start_date" "$formatted_end_date" "$DEPLOY_MAIN_REVISION" "$component_id" "$DEPLOY_BUILD_ID")
 
