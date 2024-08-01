@@ -70,10 +70,10 @@ parse_millis() {
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
-        date -r $seconds -u +"%Y-%m-%dT%H:%M:%S"
+        date -r $seconds -u +"%Y-%m-%dT%H:%M:%SZ"
     else
         # Linux and other Unix-like systems
-        date -u -d @$seconds +"%Y-%m-%dT%H:%M:%S"
+        date -u -d @$seconds +"%Y-%m-%dT%H:%M:%SZ"
     fi
 }
 
@@ -84,10 +84,10 @@ parse_commit_log_timestamp() {
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
       # macOS
-      formatted_date=$(date -j -f '%Y-%m-%d %H:%M:%S %z' "$timestamp" +'%Y-%m-%dT%H:%M:%S')
+      formatted_date=$(date -j -f '%Y-%m-%d %H:%M:%S %z' "$timestamp" +'%Y-%m-%dT%H:%M:%SZ')
   else
       # Linux and other Unix-like systems
-      formatted_date=$(date -d "$timestamp" +'%Y-%m-%dT%H:%M:%S')
+      formatted_date=$(date -d "$timestamp" +'%Y-%m-%dT%H:%M:%SZ')
   fi
   
   echo "$formatted_date"
@@ -100,7 +100,7 @@ make_vsm_deploy() {
   local formatted_start_date=$2
   local formatted_end_date=$3
   local deploy_main_revision=$4
-  local deploy_component=$5
+  local deploy_component_oid=$5
   local deploy_build_id=$6
   
   json="{"
@@ -116,7 +116,7 @@ make_vsm_deploy() {
   
   json+="\"TimeCreated\":  \"$formatted_start_date\","
   json+="\"MainRevision\": \"$deploy_main_revision\","
-  json+="\"Component\":    \"vsmcomponent/$deploy_component\","
+  json+="\"Component\":    \"vsmcomponent/$deploy_component_oid\","
   json+="\"BuildId\":      \"$deploy_build_id\""
   json+="}"
   json+="}"
@@ -203,7 +203,7 @@ fi
 ### Script flow starts here
 echo ""
 ## Make a Deploy
-deploy_response=$(make_vsm_deploy "$DEPLOY_IS_SUCCESSFUL" "$formatted_start_date" "$formatted_end_date" "$DEPLOY_MAIN_REVISION" "$DEPLOY_COMPONENT" "$DEPLOY_BUILD_ID")
+deploy_response=$(make_vsm_deploy "$DEPLOY_IS_SUCCESSFUL" "$formatted_start_date" "$formatted_end_date" "$DEPLOY_MAIN_REVISION" "$component_id" "$DEPLOY_BUILD_ID")
 
 ## Exit if error
 if [ $? -ne 0 ]; then
@@ -248,7 +248,7 @@ while IFS= read -r line; do
 
     # Exit if error
     if [ $? -ne 0 ]; then
-      echo "Failed to create VSMChange in Insights" >&2
+      echo "Failed to create VSMChange in Insights"
       exit 1
     fi
     
@@ -257,7 +257,7 @@ while IFS= read -r line; do
     
     # Exit if it we can't find the change id in the response (this could be for many reasons)
     if [ -z "$change_id" ]; then
-      echo "Failed to create VSMChange in Insights, no change id found in response." >&2
+      echo "Failed to create VSMChange in Insights, no change id found in response."
       echo "$change_response"
       exit 1
     fi
