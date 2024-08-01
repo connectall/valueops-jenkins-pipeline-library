@@ -14,6 +14,8 @@ The Insights API Base URL. (e.g. https://rally1.rallydev.com)
 ##### BuildFinishTime (optional)
 The time the build completed in milliseconds. (e.g. 1722459117000)
 
+No default is provided.
+
 ##### BuildId (optional)
 The ID of the build or artifact associated with this deploy. (e.g. insights-deploy-2)
 
@@ -22,10 +24,12 @@ Defaults to `currentBuild.id`.
 ##### BuildIsSuccessful (optional)
 A boolean that indicates whether or not the build was successful.
 
+No default is provided.
+
 ##### BuildStartTime
 The time the build started in milliseconds. (e.g. 1722459117000)
 
-##### ComponentObjectName
+##### ComponentName
 The Name of the VSMComponent the created VSMDeploy is for. (e.g. web-ui)
 
 ##### CurrentBuildCommit (optional)
