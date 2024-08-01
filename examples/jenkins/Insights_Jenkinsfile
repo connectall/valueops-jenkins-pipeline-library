@@ -1,0 +1,75 @@
+@Library('insights') _
+pipeline {
+    agent any
+
+    environment {
+      INSIGHTS_API_KEY = credentials('insights-api-key')
+      INSIGHTS_API_URL = "https://rally1.rallydev.com"
+      INSIGHTS_WORKSPACE_OBJECT_ID = 41529001
+      INSIGHTS_COMPONENT_OBJECT_ID = 423575325641
+    }
+
+    stages {
+        stage('Checkout') {
+          steps {
+            script {
+              gitVars = git branch: 'insights_scripts', url: 'git@github.com:wbeard/connectall-jenkins-shared-library.git'
+            }
+          }
+        }
+        
+        stage('Create Deploy & Commits') {
+            steps {
+              script {
+                    postDeployAndCommitsToInsights(
+                        ApiKey: "${env.INSIGHTS_API_KEY}",
+                        ApiUrl: "${env.INSIGHTS_API_URL}",
+                        BuildComponentObjectId: "${env.INSIGHTS_COMPONENT_OBJECT_ID}",
+                        BuildFinishTime: "${String.valueOf(currentBuild.timeInMillis + currentBuild.duration)}",
+                        BuildIsSuccessful: currentBuild.currentResult == 'SUCCESS',
+                        BuildStartTime: "${currentBuild.timeInMillis}",
+                        WorkspaceObjectId: "${env.INSIGHTS_WORKSPACE_OBJECT_ID}"
+                    )
+              }
+            }
+        }
+        
+        stage('Update Deploy Success & Finish Time') {
+          steps {
+            script {
+                updateDeployToInsights(
+                    ApiKey: "${env.INSIGHTS_API_KEY}",
+                    ApiUrl: "${env.INSIGHTS_API_URL}",
+                    BuildFinishTime: "${String.valueOf(currentBuild.timeInMillis + currentBuild.duration)}",
+                    BuildId: "${env.BUILD_ID}", 
+                    BuildIsSuccessful: currentBuild.currentResult == 'SUCCESS',
+                    WorkspaceObjectId: "${env.INSIGHTS_WORKSPACE_OBJECT_ID}",
+                )
+            }
+          }
+        }
+    }
+
+    post {
+        success {
+            script {
+                echo 'Build success'
+            }
+        }
+        unstable {
+            script {
+                echo 'Build unstable'
+            }
+        }
+        aborted {
+            script {
+                echo 'Build aborted'
+            }
+        }
+        failure {
+            script {
+                echo 'Build failed'
+            }
+        }
+    }
+}
