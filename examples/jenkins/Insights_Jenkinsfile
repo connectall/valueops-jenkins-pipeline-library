@@ -1,4 +1,4 @@
-@Library('insights') _
+@Library('insights_library') _
 pipeline {
     agent any
 
