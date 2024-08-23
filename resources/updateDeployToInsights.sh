@@ -44,10 +44,10 @@ parse_millis() {
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
-        date -r $seconds -u +"%Y-%m-%dT%H:%M:%S"
+        date -r $seconds -u +"%Y-%m-%dT%H:%M:%SZ"
     else
         # Linux and other Unix-like systems
-        date -u -d @$seconds +"%Y-%m-%dT%H:%M:%S"
+        date -u -d @$seconds +"%Y-%m-%dT%H:%M:%SZ"
     fi
 }
 
