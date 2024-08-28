@@ -55,12 +55,15 @@ parse_commit_log_timestamp() {
 post_commit() {
     local _commitId=$1
     local _commitTimestamp=$2
-  
+
+     # Parse the date
+    _formattedTimestamp=$(parse_commit_log_timestamp "$_commitTimestamp")
+   
     json="{
             \"appLinkName\":\"$AUTOMATION_NAME\",
             \"fields\": {
                 \"CommitId\":\"$_commitId\",
-                \"CommitTimestamp\":\"$_commitTimestamp\",
+                \"CommitTimestamp\":\"$_formattedTimestamp\",
                 \"DeployId\": \"$DEPLOY_BUILD_ID\"
             }
         }"
@@ -107,13 +110,11 @@ commit_count=0
 ## Loop over the commit log and post commits to ConnectALL
 while IFS= read -r line; do
     # Read the line
-    read -r commit_id timestamp <<< "$line"
+    read -r commit_id commit_timestamp <<< "$line"
    
-    # Parse the date
-    formatted_date=$(parse_commit_log_timestamp "$timestamp")
-    
     # Post commit to ConnectALL using AUTOMATION_NAME on DEPLOY_BUILD_ID
-    change_response=$(post_commit "$commit_id" "$formatted_date")
+    debug "Posting commit $commit_id with timestamp $commit_timestamp to ConnectALL"
+    post_commit "$commit_id" "$commit_timestamp"
     if [ $? -ne 0 ]; then
       exitWithError "Failed to create VSMChange in Insights"
     fi
