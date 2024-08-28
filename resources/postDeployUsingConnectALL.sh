@@ -51,17 +51,29 @@ post_Deploy() {
     local _isSuccessful=$6
     local _automationName=$7
 
-    json="{ 
+    # if CREATE_DEPLOY is true then print creating deploy message
+    if [ "$CREATE_DEPLOY" = "true" ]; then
+        json="{ 
         \"appLinkName\":\"$_automationName\",
         \"fields\": {
-            \"IsSuccessful\":\"$_isSuccessful\",
             \"TimeCreated\":\"$_deployStartDate\",
-            \"TimeDeployed\":\"$_deployEndDate\",
             \"MainRevision\":\"$_deployCommit\",
             \"Component\":\"$_deployComponent\",
             \"Id\": \"$_deployId\"
             }
         }"
+    else
+        json="{ 
+        \"appLinkName\":\"$_automationName\",
+        \"fields\": {
+            \"IsSuccessful\":\"$_isSuccessful\",
+            \"TimeDeployed\":\"$_deployEndDate\",
+            \"Id\": \"$_deployId\"
+            }
+        }"
+    fi
+
+    
 
     debug "Posting Deploy to ConnectALL"
     debug "$json"

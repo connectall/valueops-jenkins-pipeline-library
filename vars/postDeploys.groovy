@@ -4,7 +4,8 @@ def call(Map config = [:]){
         BuildStartTime: '',
         BuildFinishTime: '',
         BuildCommit: '',
-        BuildResult: 'false'
+        BuildResult: '',
+        Create: 'false'
     ]
 
     mergedConfig = defaultConfig + config
@@ -18,7 +19,8 @@ def call(Map config = [:]){
       "DEPLOY_START_TIME=${mergedConfig.BuildStartTime}",
       "DEPLOY_END_TIME=${mergedConfig.BuildFinishTime}",
       "DEPLOY_IS_SUCCESSFUL=${mergedConfig.BuildResult}",
-      "DEPLOY_MAIN_REVISION=${mergedConfig.BuildCommit}"
+      "DEPLOY_MAIN_REVISION=${mergedConfig.BuildCommit}",
+      "CREATE_DEPLOY=${mergedConfig.Create}"
   ]) {
         sh(libraryResource('postDeployUsingConnectALL.sh'))
   }
