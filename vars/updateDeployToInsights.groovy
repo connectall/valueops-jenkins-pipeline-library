@@ -8,7 +8,7 @@ def call(Map config = [:]) {
     BuildIsSuccessful: ''
   ]
   def mergedConfig = defaultConfig + config
-  
+
   withEnv([
       "API_KEY=${mergedConfig.ApiKey}",
       "API_URL=${mergedConfig.ApiUrl}",

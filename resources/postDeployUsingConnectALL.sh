@@ -29,14 +29,17 @@ validate_input() {
 parse_millis() {
     local ms=$1
     local seconds=$((ms / 1000))
+    local _formatted_date
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
-        date -r $seconds -u +"%Y-%m-%dT%H:%M:%SZ"
+        _formatted_date=$(date -r $seconds -u +"%Y-%m-%dT%H:%M:%SZ")
     else
         # Linux and other Unix-like systems
-        date -u -d @$seconds +"%Y-%m-%dT%H:%M:%SZ"
+        _formatted_date=$(date -u -d @$seconds +"%Y-%m-%dT%H:%M:%SZ")
     fi
+
+    echo "$_formatted_date"
 }
 
 post_Deploy() {
@@ -82,7 +85,7 @@ debug "DEPLOY_START_TIME: $DEPLOY_START_TIME"
 debug "DEPLOY_END_TIME: $DEPLOY_END_TIME"
 debug "DEPLOY_IS_SUCCESSFUL: $DEPLOY_IS_SUCCESSFUL"
 debug "DEPLOY_MAIN_REVISION: $DEPLOY_MAIN_REVISION"
-debug "DEPLOY_COMPONENT_NAME: $DEPLOY_COMPONENT_NAME"
+debug "DEPLOY_COMPONENT: $DEPLOY_COMPONENT"
 
 # echo "PREVIOUS_SUCCESS_BUILD_COMMIT: $PREVIOUS_SUCCESS_BUILD_COMMIT"
 # echo "CURRENT_BUILD_COMMIT: $CURRENT_BUILD_COMMIT"
@@ -94,28 +97,35 @@ validate_input "$API_KEY" "ConnectALL_Api_Key"
 validate_input "$API_URL" "ConnectALL_Api_Url"
 validate_input "$AUTOMATION_NAME" "AutomationName"
 validate_input "$DEPLOY_BUILD_ID" "DeployId"
+validate_input "$DEPLOY_COMPONENT: BuildComponent"
 
 
 # Format the start and end date
-if [ -z "$DEPLOY_START_TIME" ]; then
+if [ -n "$DEPLOY_START_TIME" ]; then
     _formatted_start_date=$(parse_millis $DEPLOY_START_TIME)
     if [ $? -ne 0 ]; then
         exitWithError "Could not parse deploy start time: $DEPLOY_START_TIME"
     fi
+    debug "Formatted start date: $_formatted_start_date converted from $DEPLOY_START_TIME"
+else
+    _formatted_start_date=""
 fi
 
-if [ -z "$DEPLOY_END_TIME" ]; then
+if [ -n "$DEPLOY_END_TIME" ]; then
     _formatted_end_date=$(parse_millis $DEPLOY_END_TIME)
     if [ $? -ne 0 ]; then
         exitWithError "Could not parse deploy end time: $DEPLOY_END_TIME"
     fi
+     debug "Formatted end date: $_formatted_end_date converted from $DEPLOY_END_TIME"
+else
+    _formatted_end_date=""
 fi
 
 debug "Formatted start date: $_formatted_start_date"
 debug "Formatted end date: $_formatted_end_date"
 
 
-post_Deploy "$DEPLOY_BUILD_ID" "$_formatted_start_date" "$_formatted_end_date" "$DEPLOY_MAIN_REVISION" "$DEPLOY_COMPONENT_NAME" "$DEPLOY_IS_SUCCESSFUL" "$AUTOMATION_NAME"
+post_Deploy "$DEPLOY_BUILD_ID" "$_formatted_start_date" "$_formatted_end_date" "$DEPLOY_MAIN_REVISION" "$DEPLOY_COMPONENT" "$DEPLOY_IS_SUCCESSFUL" "$AUTOMATION_NAME"
 ## Exit if error
 if [ $? -ne 0 ]; then
     exitWithError "Failed to post deploy to ConnectALL"

@@ -74,6 +74,7 @@ post_commit() {
     fi
     
     debug "$response"
+    echo "$response"
 }
 
 # ######################## Main script ########################
