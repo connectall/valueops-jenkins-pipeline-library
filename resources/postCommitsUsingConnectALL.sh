@@ -48,7 +48,6 @@ parse_commit_log_timestamp() {
       formatted_date=$(date -d "$timestamp" +'%Y-%m-%dT%H:%M:%SZ')
   fi
   
-  debug "Formatted date $timestamp => $formatted_date"
   echo "$formatted_date"
 }
 
