@@ -33,10 +33,10 @@ parse_millis() {
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
-        _formatted_date=$(date -r $seconds -u +"%Y-%m-%dT%H:%M:%SZ")
+        _formatted_date=$(date -r $seconds -u +"%Y-%m-%dT%H:%M:%Sz")
     else
         # Linux and other Unix-like systems
-        _formatted_date=$(date -u -d @$seconds +"%Y-%m-%dT%H:%M:%SZ")
+        _formatted_date=$(date -u -d @$seconds +"%Y-%m-%dT%H:%M:%Sz")
     fi
 
     echo "$_formatted_date"
@@ -68,6 +68,7 @@ post_Deploy() {
         \"fields\": {
             \"IsSuccessful\":\"$_isSuccessful\",
             \"TimeDeployed\":\"$_deployEndDate\",
+            \"Component\":\"$_deployComponent\",
             \"Id\": \"$_deployId\"
             }
         }"
