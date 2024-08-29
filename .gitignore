@@ -23,5 +23,8 @@
 hs_err_pid*
 replay_pid*
 
+# Groovy settings
+.groovylintrc.json
+
 # the commit log we make when testing locally
 commit_log
