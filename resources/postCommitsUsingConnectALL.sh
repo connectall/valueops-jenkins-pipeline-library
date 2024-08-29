@@ -42,10 +42,10 @@ parse_commit_log_timestamp() {
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
       # macOS
-      formatted_date=$(date -j -f '%Y-%m-%d %H:%M:%S %z' "$timestamp" +'%Y-%m-%dT%H:%M:%SZ')
+      formatted_date=$(date -j -f '%Y-%m-%d %H:%M:%S %z' "$timestamp" +'%Y-%m-%dT%H:%M:%S%z')
   else
       # Linux and other Unix-like systems
-      formatted_date=$(date -d "$timestamp" +'%Y-%m-%dT%H:%M:%SZ')
+      formatted_date=$(date -d "$timestamp" +'%Y-%m-%dT%H:%M:%S%z')
   fi
   
   echo "$formatted_date"
