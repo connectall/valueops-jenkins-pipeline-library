@@ -67,6 +67,7 @@ post_Deploy() {
         \"appLinkName\":\"$_automationName\",
         \"fields\": {
             \"IsSuccessful\":\"$_isSuccessful\",
+            \"TimeCreated\":\"$_deployStartDate\",
             \"TimeDeployed\":\"$_deployEndDate\",
             \"Component\":\"$_deployComponent\",
             \"Id\": \"$_deployId\"
@@ -111,6 +112,7 @@ validate_input "$API_URL" "ConnectALL_Api_Url"
 validate_input "$AUTOMATION_NAME" "AutomationName"
 validate_input "$DEPLOY_BUILD_ID" "DeployId"
 validate_input "$DEPLOY_COMPONENT: BuildComponent"
+validate_input "$DEPLOY_START_TIME: BuildStartTime"
 
 
 # Format the start and end date
