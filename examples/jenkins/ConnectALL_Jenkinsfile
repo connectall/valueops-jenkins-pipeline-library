@@ -8,6 +8,7 @@ pipeline {
         REPOS_TO_BE_BUILT = "${reposToBeBuilt}"
         CONNECTALL_API_KEY = credentials('connectall-api-key')
         CONNECTALL_API_URL = credentials('connectall-api-url')
+        DEBUG_VALUEOPS_INSIGHTS_LIBRARY = 'true'
     }
     parameters {
          booleanParam(name: 'BLACKDUCK_SCAN', defaultValue: false, description: 'Enable blackduck scan')
@@ -38,7 +39,8 @@ pipeline {
                         BuildStartTime: "${currentBuild.timeInMillis}",
                         BuildComponent: "connectall", 
                         ConnectALL_Api_Key: "${CONNECTALL_API_KEY}",
-                        ConnectALL_Api_Url: "${CONNECTALL_API_URL}"
+                        ConnectALL_Api_Url: "${CONNECTALL_API_URL}",
+                        Create: 'true'
                     )
               }
               // Wait for 10 seconds ensure the Deploy is created
@@ -52,11 +54,10 @@ pipeline {
                         AutomationName: "VSICommits", 
                         DeployId: "${env.BUILD_ID}", 
                         GitRepoLoc: "./", 
-                        PrevSuccessBuildCommit: "${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT}", 
+                        PrevSuccessBuildCommit: "${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT}",
                         CurrentBuildCommit: "${env.GIT_COMMIT}",
                         ConnectALL_Api_Key: "${CONNECTALL_API_KEY}",
                         ConnectALL_Api_Url: "${CONNECTALL_API_URL}"
-                        
                     )
               }
             }
@@ -66,16 +67,16 @@ pipeline {
               script {
                     sh 'rm -rf connectall-jenkins-shared-library'
                     sh 'git clone https://github.com/rising-costars/connectall-jenkins-shared-library.git'
-                    // postCommits(
-                    //     AutomationName: "VSICommits", 
-                    //     DeployId: "${env.BUILD_ID}", 
-                    //     GitRepoLoc: "./connectall-jenkins-shared-library", 
-                    //     PrevSuccessBuildCommit: "HEAD^1", 
-                    //     CurrentBuildCommit: "HEAD",
-                    //     ConnectALL_Api_Key: "${CONNECTALL_API_KEY}",
-                    //     ConnectALL_Api_Url: "${CONNECTALL_API_URL}"
+                     postCommits(
+                        AutomationName: "VSICommits", 
+                        DeployId: "${env.BUILD_ID}", 
+                        GitRepoLoc: "./connectall-jenkins-shared-library", 
+                        PrevSuccessBuildCommit: "HEAD^1", 
+                        CurrentBuildCommit: "HEAD",
+                        ConnectALL_Api_Key: "${CONNECTALL_API_KEY}",
+                        ConnectALL_Api_Url: "${CONNECTALL_API_URL}"
                         
-                    // )
+                    )
               }
             }
         }
@@ -114,13 +115,13 @@ pipeline {
                 postDeploys(
                     AutomationName: "VSIDeploys", 
                     DeployId: "${env.BUILD_ID}", 
+                    BuildComponent: "connectall",
                     BuildResult: "${currentBuild.currentResult}", 
-                    BuildComponent: "connectall", 
                     BuildStartTime: "${currentBuild.timeInMillis}",
                     BuildFinishTime: "${String.valueOf(currentBuild.timeInMillis + currentBuild.duration)}",
                     ConnectALL_Api_Key: "${CONNECTALL_API_KEY}",
-                    ConnectALL_Api_Url: "${CONNECTALL_API_URL}"
-                    
+                    ConnectALL_Api_Url: "${CONNECTALL_API_URL}",
+                    Create: 'false'
                 )
             
             }

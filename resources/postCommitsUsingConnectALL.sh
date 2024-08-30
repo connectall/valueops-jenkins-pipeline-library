@@ -57,7 +57,7 @@ post_commit() {
 
      # Parse the date
     _formattedTimestamp=$(parse_commit_log_timestamp "$_commitTimestamp")
-   
+
     json="{
             \"appLinkName\":\"$AUTOMATION_NAME\",
             \"fields\": {
@@ -99,6 +99,13 @@ validate_input "$GIT_REPO_LOC" "GitRepoLoc"
 validate_input "$PREVIOUS_SUCCESS_BUILD_COMMIT" "PrevSuccessBuildCommit"
 validate_input "$CURRENT_BUILD_COMMIT" "CurrentBuildCommit"
 
+
+# Exit if there are no new commits
+if [ "$PREVIOUS_SUCCESS_BUILD_COMMIT" == "$CURRENT_BUILD_COMMIT" ]; then
+  info "No new commits to post to ConnectALL"
+  exit 0
+fi
+
 # Create a commit log
 log_file_path="$GIT_REPO_LOC/commit_log"
 create_commit_log "$GIT_REPO_LOC" "$log_file_path" "$PREVIOUS_SUCCESS_BUILD_COMMIT" "$CURRENT_BUILD_COMMIT"
@@ -111,9 +118,19 @@ while IFS= read -r line; do
     # Read the line
     read -r commit_id commit_timestamp <<< "$line"
    
+    # Continue if commit_id or commit_timestamp is empty
+    if [ -z "$commit_id" ] || [ -z "$commit_timestamp" ]; then
+      continue
+    fi
+
     # Post commit to ConnectALL using AUTOMATION_NAME on DEPLOY_BUILD_ID
     debug "Posting commit $commit_id with timestamp $commit_timestamp to ConnectALL"
     post_commit "$commit_id" "$commit_timestamp"
+    
+    if [ $? -ne 0 ]; then
+      exitWithError "Failed to post commit $commit_id to ConnectALL"
+    fi
+
     if [ $? -ne 0 ]; then
       exitWithError "Failed to create VSMChange in Insights"
     fi
