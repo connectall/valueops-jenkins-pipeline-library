@@ -100,11 +100,11 @@ validate_input "$PREVIOUS_SUCCESS_BUILD_COMMIT" "PrevSuccessBuildCommit"
 validate_input "$CURRENT_BUILD_COMMIT" "CurrentBuildCommit"
 
 
-# Create Commit log if PREVIOUS_SUCCESS_BUILD_COMMIT and CURRENT_BUILD_COMMIT are not same
-#if [ "$PREVIOUS_SUCCESS_BUILD_COMMIT" == "$CURRENT_BUILD_COMMIT" ]; then
-#  info "No new commits to post to ConnectALL"
-#  exit 0
-#fi
+# Exit if there are no new commits
+if [ "$PREVIOUS_SUCCESS_BUILD_COMMIT" == "$CURRENT_BUILD_COMMIT" ]; then
+  info "No new commits to post to ConnectALL"
+  exit 0
+fi
 
 # Create a commit log
 log_file_path="$GIT_REPO_LOC/commit_log"
@@ -120,7 +120,6 @@ while IFS= read -r line; do
    
     # Continue if commit_id or commit_timestamp is empty
     if [ -z "$_commitId" ] || [ -z "$_commitTimestamp" ]; then
-      debug "Ignoring empty commit_id or timestamp in line: $line"
       continue
     fi
 
