@@ -120,6 +120,7 @@ while IFS= read -r line; do
    
     # Continue if commit_id or commit_timestamp is empty
     if [ -z "$_commitId" ] || [ -z "$_commitTimestamp" ]; then
+      debug "Ignoring empty commit_id or timestamp in line: $line"
       continue
     fi
 
