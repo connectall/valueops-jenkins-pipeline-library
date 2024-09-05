@@ -7,5 +7,5 @@ ConnectALL Jenkins Shared Library exposes to step functions to Jenkins to publis
 * postDeploys()
 
 ## Post actions to interact with ValueOps Insights directly
-postDeployAndCommitsToInsights()
-updateDeployToInsights()
+* postDeployAndCommitsToInsights()
+* updateDeployToInsights()
