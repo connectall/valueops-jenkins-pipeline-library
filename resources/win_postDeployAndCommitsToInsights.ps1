@@ -62,18 +62,6 @@ function Parse-CommitLogTimestamp {
     return (Get-Date -Date $timestamp -Format "yyyy-MM-ddTHH:mm:ssZ")
 }
 
-function Create-CommitLog {
-    param (
-        [string]$git_repo_loc,
-        [string]$log_path,
-        [string]$from_commit,
-        [string]$to_commit
-    )
-    
-    git --git-dir="$git_repo_loc/.git" log --pretty=format:'%H %ad' --date=iso $from_commit..$to_commit > $log_path
-    #git --git-dir="./.git" log --pretty=format:'%H %ad' --date=iso "HEAD~2".."HEAD" > ./commit_log
-}
-
 # ################### ValueOps Insights functions ####################
 
 function Query-Component {
@@ -274,11 +262,7 @@ if (-not $?) {
     Exit-WithError "Failed to create deploy in Insights"
 }
 
-Debug-Log "Response : $deploy_response"
-Debug-Log "Response CreateResult : $($deploy_response.CreateResult)"
-Debug-Log "Response Error : $($deploy_response.CreateResult.Errors)"
-
-$deploy_response | Select-Object -ExpandProperty CreateResult 
+Debug-Log "Response VSMDeploy Creation Error : $($deploy_response.CreateResult.Errors)"
 
 # Get Deploy ID
 $deploy_id = Get-DeployObjectId $deploy_response
@@ -287,7 +271,7 @@ if (-not $deploy_id) {
     Error-Log "Failed to create deploy in Insights with response: $deploy_response"
     Exit-WithError "Failed to create deploy in Insights, no deploy id found in response"
 }
-Info-Log "Deploy created successfully. VSMDeploy.ObjectId: $deploy_id"
+Info-Log "VSMDeploy created successfully with ObjectId: $deploy_id for Build ID: $DEPLOY_BUILD_ID"
 
 
 # Create the commit log we're going to loop over
@@ -295,15 +279,11 @@ $log_file_path = "$GIT_REPO_LOC/commit_log"
 $git_commit_string = "$PREVIOUS_SUCCESS_BUILD_COMMIT..$CURRENT_BUILD_COMMIT"
 
 Debug-Log "Creating commit log for commits: $git_commit_string"
-Debug-Log "Commit contents : $(git --git-dir="$GIT_REPO_LOC/.git" log --pretty=format:'%H %ad' --date=iso $git_commit_string)"
-
-
-#Create-CommitLog $GIT_REPO_LOC $log_file_path $PREVIOUS_SUCCESS_BUILD_COMMIT $CURRENT_BUILD_COMMIT
+# Debug-Log "Commit contents : $(git --git-dir="$GIT_REPO_LOC/.git" log --pretty=format:'%H %ad' --date=iso $git_commit_string)"
 rm $log_file_path -ErrorAction SilentlyContinue
 git --git-dir="$GIT_REPO_LOC/.git" log --pretty=format:'%H %ad' --date=iso $git_commit_string > $log_file_path
 
 Debug-Log "Commit log created successfully"
-Debug-Log "Commit log Contents: $(Get-Content $log_file_path)"
 
 # Loop over the commit log and make VSMChanges
 Get-Content $log_file_path | ForEach-Object {
@@ -330,9 +310,7 @@ Get-Content $log_file_path | ForEach-Object {
         Error-Log "Failed to create VSMChange in Insights"
     }
 
-    Debug-Log "Response : $change_response"
-    Debug-Log "Response CreateResult : $($change_response.CreateResult)"
-    Debug-Log "Response Error : $($change_response.CreateResult.Errors)"
+    Debug-Log "Response VSMChange Creation Error : $($change_response.CreateResult.Errors)"
     # Try to extract the change id
     $change_id = Get-ChangeObjectId $change_response
 
@@ -341,8 +319,7 @@ Get-Content $log_file_path | ForEach-Object {
         Exit-WithError "Failed to create VSMChange in Insights, no change id found in response: $change_response"
     }
 
-    Debug-Log "VSMChange created successfully"
-    Debug-Log "VSMChange.ObjectId: $change_id"
+    Info-log "VSMChange created successfully with ObjectId: $change_id for revision: $commit_id"
 }
 
 Info-Log "Deploy and Changes posted successfully to ValueOps Insights with Build ID: $DEPLOY_BUILD_ID"
