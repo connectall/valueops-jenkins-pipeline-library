@@ -10,7 +10,8 @@ def call(Map config = [:]) {
         BuildIsSuccessful: '',
         BuildStartTime: '',
         GitRepoLoc: './',
-        PreviousSuccessBuildCommit: env.GIT_PREVIOUS_SUCCESSFUL_COMMIT ?: ''
+        PreviousSuccessBuildCommit: env.GIT_PREVIOUS_SUCCESSFUL_COMMIT ?: '',
+        Runtime: 'Linux'
     ]
     def mergedConfig = defaultConfig + config
 
@@ -28,6 +29,14 @@ def call(Map config = [:]) {
         "GIT_REPO_LOC=${mergedConfig.GitRepoLoc}",
         "PREVIOUS_SUCCESS_BUILD_COMMIT=${mergedConfig.PreviousSuccessBuildCommit}"
     ]) {
-        sh(libraryResource('postDeployAndCommitsToInsights.sh'))
+        if (mergedConfig.Runtime == 'Windows') {
+            echo 'Running Windows Powershell script'
+            powershell(libraryResource('win_postDeployAndCommitsToInsights.ps1'))
+        } else if (mergedConfig.Runtime == 'Linux') {
+            echo 'Running Linux script'
+            sh(libraryResource('postDeployAndCommitsToInsights.sh'))
+        } else {
+            error 'Runtime not supported'
+        }
     }
 }
