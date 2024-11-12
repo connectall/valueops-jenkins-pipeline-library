@@ -80,8 +80,8 @@ function Query-Component {
     )
     $Resource_Endpoint="$INSIGHTS_API_URI/vsmcomponent?query=(Name%20=%20$name)&workspace=workspace/$API_WORKSPACE_OID&fetch=ObjectID"
     
-    Info-Log "Fetching Component from Insights"
-    Info-Log "GET URI $Resource_Endpoint"
+    #Info-Log "Fetching Component from Insights"
+    #Info-Log "GET URI $Resource_Endpoint"
 
     $response = Invoke-RestMethod -Uri "$Resource_Endpoint" -Headers @{
         "ZSESSIONID" = $API_KEY
@@ -94,11 +94,12 @@ function Query-Component {
     return $response
 }
 
-function Get-ObjectIdFromResponse {
+function Get-ComponentObjectId {
     param (
         [string]$response
     )
-    $response | ConvertFrom-Json | Select-Object -ExpandProperty ObjectID
+    #Debug-Log "Response : $response"
+    return $response | Select-Object -ExpandProperty QueryResult | Select-Object -ExpandProperty Results | Select-Object -ExpandProperty ObjectID
 }
 
 
@@ -124,8 +125,8 @@ function Make-VsmDeploy {
 
     $Resource_Endpoint="$INSIGHTS_API_URI/vsmdeploy/create?workspace=workspace/$API_WORKSPACE_OID"
     
-    Info-Log "Posting VSMDeploy to Insights"
-    Info-Log "Post to URI $Resource_Endpoint with Request : $json"
+    #Info-Log "Posting VSMDeploy to Insights"
+    #Info-Log "Post to URI $Resource_Endpoint with Request : $json"
 
     $response = Invoke-RestMethod -Uri "$Resource_Endpoint" -Method Post -Headers @{
         "ZSESSIONID" = $API_KEY
@@ -136,8 +137,16 @@ function Make-VsmDeploy {
         Exit-WithError "Could not connect to $API_URL"
     }
 
-    Debug-Log "Response : $response"
+    #Debug-Log "Response : $response"
     return $response
+}
+
+function Get-DeployObjectId {
+    param (
+        [string]$response
+    )
+    #Debug-Log "Response : $response"
+    return $response | Select-Object -ExpandProperty CreateResult | Select-Object -ExpandProperty Object | Select-Object -ExpandProperty ObjectID
 }
 
 function Make-VsmChange {
@@ -155,8 +164,8 @@ function Make-VsmChange {
     } | ConvertTo-Json
 
     $Resource_Endpoint="$INSIGHTS_API_URI/vsmchange/create?workspace=workspace/$API_WORKSPACE_OID"
-    Info-Log "Posting VSMChange to Insights"
-    Info-Log "Post to URI $Resource_Endpoint with Request : $json"
+    #Info-Log "Posting VSMChange to Insights"
+    #Info-Log "Post to URI $Resource_Endpoint with Request : $json"
 
     $response = Invoke-RestMethod -Uri "$Resource_Endpoint" -Method Post -Headers @{
         "ZSESSIONID" = $API_KEY
@@ -193,7 +202,7 @@ $GIT_REPO_LOC = $env:GIT_REPO_LOC
 Info-Log "Posting Deploy to ValueOps Insights with Build ID: $DEPLOY_BUILD_ID"
 
 Debug-Log "API_URL: $API_URL"
-Debug-Log "AUTOMATION_NAME: $API_WORKSPACE_OID"
+Debug-Log "API_WORKSPACE_OID: $API_WORKSPACE_OID"
 Debug-Log "DEPLOY_COMPONENT_NAME: $DEPLOY_COMPONENT_NAME"
 Debug-Log "DEPLOY_BUILD_ID: $DEPLOY_BUILD_ID"
 Debug-Log "DEPLOY_START_TIME: $DEPLOY_START_TIME"
@@ -241,8 +250,9 @@ $component_response = Query-Component $DEPLOY_COMPONENT_NAME
 if (-not $?) {
     Exit-WithError "Failed to query component in Insights"
 }
+Debug-Log "Response : $component_response"
 
-$component_id = Get-ObjectIdFromResponse $component_response
+$component_id = Get-ComponentObjectId $component_response
 if (-not $component_id) {
     Debug-Log $component_response
     Exit-WithError "Failed to find component in Insights, no component id found in response."
@@ -256,7 +266,7 @@ if (-not $?) {
 }
 
 # Get Deploy ID
-$deploy_id = Get-ObjectIdFromResponse $deploy_response
+$deploy_id = Get-DeployObjectId $deploy_response
 # Exit if we can't find the deploy id in the response (this could be for many reasons)
 if (-not $deploy_id) {
     Error-Log "Failed to create deploy in Insights with response: $deploy_response"
